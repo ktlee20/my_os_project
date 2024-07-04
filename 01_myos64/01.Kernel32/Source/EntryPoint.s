@@ -50,6 +50,7 @@ PROTECTEDMODE:
 	call PRINTMESSAGE
 	add esp, 12	; Clean up the stack
 
+	jmp dword 0x08: 0x10200 ; Execute Main function
 	jmp $	; Execute an infinite loop
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;

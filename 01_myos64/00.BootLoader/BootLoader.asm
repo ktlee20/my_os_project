@@ -12,7 +12,7 @@ SECTION .text		; Define text segment
 jmp 0x07C0:START	; Set CS segment register to 0X07C0,
 					; and then jump to START label
 
-TOTALSECTORCOUNT:	dw 1	; OS image size
+TOTALSECTORCOUNT:	dw 0x02	; OS image size
 							; maximum 1152 sectors
 
 START:				; Label START
