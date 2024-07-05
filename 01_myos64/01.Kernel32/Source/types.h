@@ -1,11 +1,11 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
-#define BYTE	unsigned char
-#define WORD	unsigned short
-#define DWORD	unsigned int
-#define QWORD	unsigned long
-#define BOOL	unsigned char
+#define kbyte	unsigned char
+#define kword	unsigned short
+#define kdword	unsigned int
+#define kqword	unsigned long
+#define kbool	unsigned char
 
 #define TRUE	1
 #define FALSE	0
@@ -13,10 +13,10 @@
 
 /* between push and pop, members are aligned by a byte */
 #pragma pack( push, 1 )
-typedef struct kCharacterStruct
+typedef struct video_buffer_character
 {
-	BYTE bCharacter;
-	BYTE bAttribute;
-} CHARACTER;
+	kbyte character;
+	kbyte attribute;
+} kvideo_buf_character;
 #pragma pack( pop )
 #endif /* __TYPES_H__ */

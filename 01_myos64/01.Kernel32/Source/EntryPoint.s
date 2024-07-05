@@ -11,6 +11,22 @@ START:
 	mov ds, ax		; Set the address to segment registers
 	mov es, ax
 
+	; Activate A20 gate
+	; Through BIOS
+	mov ax, 0x2401	; Activate A20 gates
+	int 0x15		; Call BIOS Interrupt service
+
+	jc .A20GATEERROR
+	jmp .A20GATESUCCESS
+
+.A20GATEERROR:
+	; When errors occur, try to change system control ports.
+	in al, 0x92		; Read 1 byte from al
+	or al, 0x02		; Set A20 gate bit to 1
+	and al, 0xFE	; Set reset bit to 0
+	out 0x92, al	; Set system control bit
+
+.A20GATESUCCESS:
 	; Load GDTR
 	cli				; Block interrupts
 	lgdt [ GDTR ]	; Load GDTR structure to processor

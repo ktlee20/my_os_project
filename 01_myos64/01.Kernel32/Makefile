@@ -3,7 +3,7 @@
 ######################################################
 ASM32 = nasm
 CC32 = gcc -c -m32 -ffreestanding
-LD32 = ld -melf_i386 -T ../elf_i386.x -nostdlib -e Main -Ttext 0x10200
+LD32 = ld -melf_i386 -T ../elf_i386.x -nostdlib -e kernel_main -Ttext 0x10200
 OBJCOPY32 = objcopy -j .text -j .data -j .rodata -j .bss -S -O binary
 
 OBJECTDIRECTORY = Temp
@@ -41,10 +41,10 @@ clean:
 ######################################################
 # Recalled by make, executed from Temp directory
 ######################################################
-CENTRYPOINTOBJECTFILE = main.o
+CENTRYPOINTOBJECTFILE = init.o
 CSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.c)
 ASSEMBLYSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*asm)
-COBJECTFILES = $(subst main.o, , $(notdir $(patsubst %.c,%.o,$(CSOURCEFILES))))
+COBJECTFILES = $(subst init.o, , $(notdir $(patsubst %.c,%.o,$(CSOURCEFILES))))
 ASSEMBLYOBJECTFILES = $(notdir $(patsubst %.asm,%.o,$(ASSEMBLYSOURCEFILES)))
 
 # .c -> .o
