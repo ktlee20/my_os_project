@@ -1,4 +1,5 @@
 #include "types.h"
+#include "page.h"
 
 void kprint_string(int x, int y, const char *pc_string);
 kbool kinitialise_kernel_code_area(void);
@@ -9,6 +10,8 @@ void
 kernel_main( void )
 {
 	kdword i;
+	kdword eax, ebx, ecx, edx;
+	char vendor_name[13] = {0, };
 
 	kprint_string(0, 4, "C Language Kernel Started.....[PASS]");
 
@@ -31,6 +34,33 @@ kernel_main( void )
 		while (1);
 	}
 	kprint_string(35, 6, "PASS");
+
+	/* Initialise page tables */
+	kprint_string(0, 7, "IA-32e Page Tables Initialise.....[    ]");
+	kinitialise_page_tables();
+	kprint_string(35, 7, "PASS");
+
+	/* Read vendor information  */
+	kReadCPUID(0x00, &eax, &ebx, &ecx, &edx);
+	*(kdword *)vendor_name = ebx;
+	*((kdword *)vendor_name + 1) = edx;
+	*((kdword *)vendor_name + 2) = ecx;
+	kprint_string(0, 8, "Processor Vendor String.....[            ]");
+	kprint_string(29, 8, vendor_name);
+
+	/* Check if 64-bit is supported */
+	kReadCPUID(0x80000001, &eax, &ebx, &ecx, &edx);
+	kprint_string(0, 9, "64bit Mode Support Check.....[    ]");
+	if (edx & (1 << 29)) {
+		kprint_string(29, 9, "PASS");
+	} else {
+		kprint_string(29, 9, "FAIL");
+		kprint_string(0, 10, "This processor does not support 64bit mode");
+		while (1);
+	}
+
+	kprint_string(0, 10, "Switch To IA-32e Mode");
+	// kSwitchAndExecute64bitKernel();
 
 	while (1);
 }

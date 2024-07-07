@@ -42,12 +42,12 @@ START:
 	; Change the kernel code segment to 0x00 base
 	; CS segment selector : EIP: set cs register to the code descriptor and 
 	; jump to the start of the protected mode
-	jmp dword 0x08: ( PROTECTEDMODE - $$ + 0x10000 )
+	jmp dword 0x18: ( PROTECTEDMODE - $$ + 0x10000 )
 
 	; Enter the protected mode
 [ BITS 32 ]	; Set the below codes to 32 bits
 PROTECTEDMODE:
-	mov ax, 0x10	; Set the ds, es, fs, gs register to data descriptor
+	mov ax, 0x20	; Set the ds, es, fs, gs register to data descriptor
 	mov ds, ax
 	mov es, ax
 	mov fs, ax
@@ -66,7 +66,7 @@ PROTECTEDMODE:
 	call PRINTMESSAGE
 	add esp, 12	; Clean up the stack
 
-	jmp dword 0x08: 0x10200 ; Execute Main function
+	jmp dword 0x18: 0x10200 ; Execute Main function
 	jmp $	; Execute an infinite loop
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -146,6 +146,23 @@ GDT:
 		db 0x00
 		db 0x00
 		db 0x00
+	; Code segment descriptor for IA-32e mode
+	IA_32eCODEDESCRIPTOR:
+		dw 0xFFFF	; Limit [15:0]
+		dw 0x0000	; Base [15:0]
+		db 0x00		; Base [23:16]
+		db 0x9A		; P=1, DPL=0, Code Segment, Execute/Read
+		db 0xAF		; G=1, D=0, L=1, Limit[19:16]
+		db 0x00		; Base [31:24]
+
+	; Data segment descriptor for IA-32e mode
+	IA_32eDATADESCRIPTOR:
+		dw 0xFFFF	; Limit [15:0]
+		dw 0x0000	; Base [15:0]
+		db 0x00		; Base [23:16]
+		db 0x92		; P=1, DPL=0, Data Segment, Read/Write
+		db 0xAF		; G=1, D=0, L=1, Limit[19:16]
+		db 0x00		; Base [31:24]
 
 	; Code segment descriptor for protected mode
 	CODEDESCRIPTOR:
