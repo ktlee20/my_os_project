@@ -1,7 +1,8 @@
-all: ImageMaker.bin
+all: ImageMaker
 
-ImageMaker.bin: ImageMaker.c
+ImageMaker: ImageMaker.c
 	gcc -o $@ $<
 
 clean:
-	rm -f ../../ImageMaker.bin
+	rm -f ../../ImageMaker
+	rm -f ImageMaker

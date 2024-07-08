@@ -6,7 +6,7 @@ ImageMaker:
 	@echo
 
 	make -C 00.ImageMaker
-	mv 00.ImageMaker/ImageMaker.bin ../
+	mv ./00.ImageMaker/ImageMaker ../
 
 	@echo
 	@echo ============ Build Complete ============

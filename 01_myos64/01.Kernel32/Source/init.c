@@ -1,9 +1,11 @@
 #include "types.h"
 #include "page.h"
+#include "ModeSwitch.h"
 
 void kprint_string(int x, int y, const char *pc_string);
 kbool kinitialise_kernel_code_area(void);
 kbool kcheck_init_memory_space(void);
+void kcopy_kernel64_image_to_2mb(void);
 
 // main function
 void
@@ -52,15 +54,19 @@ kernel_main( void )
 	kReadCPUID(0x80000001, &eax, &ebx, &ecx, &edx);
 	kprint_string(0, 9, "64bit Mode Support Check.....[    ]");
 	if (edx & (1 << 29)) {
-		kprint_string(29, 9, "PASS");
+		kprint_string(30, 9, "PASS");
 	} else {
-		kprint_string(29, 9, "FAIL");
+		kprint_string(30, 9, "FAIL");
 		kprint_string(0, 10, "This processor does not support 64bit mode");
 		while (1);
 	}
 
-	kprint_string(0, 10, "Switch To IA-32e Mode");
-	// kSwitchAndExecute64bitKernel();
+	kprint_string(0, 10, "Copy IA-32e Kernel to 2M Address.....[    ]");	
+	kcopy_kernel64_image_to_2mb();
+	kprint_string(38, 10, "PASS");
+
+	kprint_string(0, 11, "Switch To IA-32e Mode.....[    ]");
+	kSwitchAndExecute64bitKernel();
 
 	while (1);
 }
@@ -109,6 +115,28 @@ kinitialise_kernel_code_area(void)
 		init_memory_address++;
 	}
 	return TRUE;
+}
+
+void
+kcopy_kernel64_image_to_2mb(void)
+{
+	kword kernel32_sector_count, total_kernel_sector_count;
+	kdword *src_addr, *dst_addr;
+	int i;
+
+	total_kernel_sector_count = *((kword *) 0x7c05);
+	kernel32_sector_count = *((kword *) 0x7C07);
+
+	src_addr = (kdword *) (0x10000 + (kernel32_sector_count * 512));
+	dst_addr = (kdword *) 0x200000;
+
+	for (i = 0 ;
+		 i < 512 * (total_kernel_sector_count - kernel32_sector_count) / 4 ;
+		 i++) {
+		*dst_addr = *src_addr;
+		dst_addr++;
+		src_addr++;
+	}
 }
 
 // Print string

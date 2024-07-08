@@ -14,6 +14,7 @@ jmp 0x07C0:START	; Set CS segment register to 0X07C0,
 
 TOTALSECTORCOUNT:	dw 0x02	; OS image size
 							; maximum 1152 sectors
+KERNEL32SECTORCOUNT: dw 0x02
 
 START:				; Label START
 	mov ax, 0x07C0	; Copy 0x07C0(DS segment address) to AX register

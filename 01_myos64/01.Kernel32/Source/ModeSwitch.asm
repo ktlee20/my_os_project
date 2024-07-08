@@ -72,7 +72,7 @@ mov cr3, eax
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Set IA32_EFER.LME to 1 bit to activate IA-32e mode ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-mov eax, 0xC0000080	; Read IA32_EFER MSR register's value (mapped to 0xC0000080)
+mov ecx, 0xC0000080	; Read IA32_EFER MSR register's value (mapped to 0xC0000080)
 rdmsr				; Read MSR register
 
 or eax, 0x0100		; Set LME bits

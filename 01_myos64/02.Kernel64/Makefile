@@ -1,10 +1,10 @@
 ######################################################
 # Build envs and rules
 ######################################################
-ASM32 = nasm
-CC32 = gcc -c -m32 -ffreestanding
-LD32 = ld -melf_i386 -T ../elf_i386.x -nostdlib -e kernel_main -Ttext 0x10200
-OBJCOPY32 = objcopy -j .text -j .data -j .rodata -j .bss -S -O binary
+ASM64 = nasm -f elf64
+CC64 = gcc -c -m64 -ffreestanding
+LD64 = ld -melf_x86_64 -T ../elf_x86_64.x -nostdlib -e kernel64_main -Ttext 0x200000
+OBJCOPY64 = objcopy -j .text -j .data -j .rodata -j .bss -S -O binary
 
 OBJECTDIRECTORY = Temp
 SOURCEDIRECTORY = Source
@@ -12,13 +12,10 @@ SOURCEDIRECTORY = Source
 ######################################################
 # Set build items and methods
 ######################################################
-all: prepare Kernel32.bin
+all: prepare Kernel64.bin
 
 prepare:
 	mkdir -p $(OBJECTDIRECTORY)
-
-$(OBJECTDIRECTORY)/EntryPoint.bin: $(SOURCEDIRECTORY)/EntryPoint.s
-	$(ASM32) -o $@ $<
 
 dep:
 	@echo === Make Dependency File ===
@@ -26,13 +23,10 @@ dep:
 	@echo === Dependency Search Complete ===
 
 ExecuteInternalBuild: dep
-	make -C $(OBJECTDIRECTORY) -f ../Makefile Kernel32.elf
+	make -C $(OBJECTDIRECTORY) -f ../Makefile Kernel64.elf
 
-$(OBJECTDIRECTORY)/Kernel32.elf.bin: ExecuteInternalBuild
-	$(OBJCOPY32) $(OBJECTDIRECTORY)/Kernel32.elf $@
-
-Kernel32.bin: $(OBJECTDIRECTORY)/EntryPoint.bin $(OBJECTDIRECTORY)/Kernel32.elf.bin
-	cat $^ > $@
+Kernel64.bin: ExecuteInternalBuild
+	$(OBJCOPY64) $(OBJECTDIRECTORY)/Kernel64.elf $@
 
 clean:
 	rm -f *.bin
@@ -41,25 +35,30 @@ clean:
 ######################################################
 # Recalled by make, executed from Temp directory
 ######################################################
-CENTRYPOINTOBJECTFILE = init.o
+ENTRYPOINTSOURCEFILE = ../$(SOURCEDIRECTORY)/EntryPoint.s
+ENTRYPOINTOBJECTFILE = EntryPoint.o
+
 CSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.c)
 ASSEMBLYSOURCEFILES = $(wildcard ../$(SOURCEDIRECTORY)/*.asm)
-COBJECTFILES = $(subst init.o, , $(notdir $(patsubst %.c,%.o,$(CSOURCEFILES))))
+COBJECTFILES = $(notdir $(patsubst %.c,%.o,$(CSOURCEFILES)))
 ASSEMBLYOBJECTFILES = $(notdir $(patsubst %.asm,%.o,$(ASSEMBLYSOURCEFILES)))
+
+$(ENTRYPOINTOBJECTFILE): $(ENTRYPOINTSOURCEFILE)
+	$(ASM64) -o $@ $<
 
 # .c -> .o
 %.o: ../$(SOURCEDIRECTORY)/%.c
-	$(CC32) -c $<
+	$(CC64) -c $<
 
 # .asm -> .o
 %.o: ../$(SOURCEDIRECTORY)/%.asm
-	$(ASM32) -f elf32 -o $@ $<
+	$(ASM64) -o $@ $<
 
 InternalDependency:
-	$(CC32) -MM $(CSOURCEFILES) > Dependency.dep
+	$(CC64) -MM $(CSOURCEFILES) > Dependency.dep
 
-Kernel32.elf: $(CENTRYPOINTOBJECTFILE) $(COBJECTFILES) $(ASSEMBLYOBJECTFILES)
-	$(LD32) -o $@ $^
+Kernel64.elf: $(ENTRYPOINTOBJECTFILE) $(COBJECTFILES) $(ASSEMBLYOBJECTFILES)
+	$(LD64) -o $@ $^
 
 ifeq (Dependency.dep, $(wildcard Dependency.dep))
 include Dependency.dep
