@@ -44,7 +44,7 @@ kactivate_keyboard(void)
 	/* Wait until input buffer becomes empty */
 	while (kcheck_input_buffer_is_full());
 
-	__sync_sychronized();
+	__sync_synchronize();
 
 	/* Transfer codes(0xAE) to turn on a keyboard to input buffer */
 	kOutPortByte(0x60, 0xF4);
@@ -52,7 +52,7 @@ kactivate_keyboard(void)
 	/* Wait until ACK message from a keyboard */
 	while (!kcheck_output_buffer_is_full());
 
-	__sync_sychronized();
+	__sync_synchronize();
 
 	/* Data from output buffer(0x60) is ACK(0xFA).
 	 * Succeed. */
@@ -67,11 +67,11 @@ kactivate_keyboard(void)
  * Read key from output buffer
  */
 kbyte
-kget_keyboard_scan_code(void)
+kget_keyboard_scancode(void)
 {
 	while (kcheck_output_buffer_is_full() == FALSE);
 
-	__sync_sychronized();
+	__sync_synchronize();
 	return kInPortByte(0x60);
 }
 
@@ -85,7 +85,7 @@ kchange_keyboard_LED(kbool caps_lock_on, kbool num_lock_on, kbool scroll_lock_on
 	/* Wait for flushing keyboard input buffer */
 	while(kcheck_input_buffer_is_full());
 
-	__sync_sychronized();
+	__sync_synchronize();
 
 	/* Send LED change command to keyboard output buffer */
 	kOutPortByte(0x60, 0xED);
@@ -97,16 +97,16 @@ kchange_keyboard_LED(kbool caps_lock_on, kbool num_lock_on, kbool scroll_lock_on
 	while (!kcheck_output_buffer_is_full());
 
 	/* Check if data is ACK */
-	if (KInPortByte(0x60) != 0xFA) {
+	if (kInPortByte(0x60) != 0xFA) {
 		return FALSE;
 	}
 
-	__sync_sychronized();
+	__sync_synchronize();
 
 	/* Send the value of changed LED status */
 	kOutPortByte(0x60, (caps_lock_on << 2)|(num_lock_on << 1)|scroll_lock_on);
 
-	__sync_sychronized();
+	__sync_synchronize();
 
 	/* Wait for flushing keyboard input buffer */
 	while(kcheck_input_buffer_is_full());
@@ -115,7 +115,7 @@ kchange_keyboard_LED(kbool caps_lock_on, kbool num_lock_on, kbool scroll_lock_on
 	while (!kcheck_output_buffer_is_full());
 
 	/* Check if data is ACK */
-	if (KInPortByte(0x60) != 0xFA) {
+	if (kInPortByte(0x60) != 0xFA) {
 		return FALSE;
 	}
 
@@ -134,7 +134,7 @@ kenable_A20gate(void)
 	/* Waiting for the keyboard response */
 	while (!kcheck_output_buffer_is_full());
 
-	__sync_sychronized();
+	__sync_synchronize();
 
 	/* Read keyboard's output port data */
 	output_port_data = kInPortByte(0x60);
@@ -144,7 +144,7 @@ kenable_A20gate(void)
 
 	/* Wait for the flushing input buffer  */
 	while (kcheck_input_buffer_is_full());
-	__sync_sychronized();
+	__sync_synchronize();
 
 	/* Send output port config command to command register */
 	kOutPortByte(0x64, 0xD1);
@@ -161,7 +161,7 @@ kreboot(void)
 {
 	/* Wait for the flushing input buffer  */
 	while (kcheck_input_buffer_is_full());
-	__sync_sychronized();
+	__sync_synchronize();
 
 	/* Send output port config command to command register */
 	kOutPortByte(0x64, 0xD1);
@@ -290,7 +290,7 @@ kcheck_alphabet_scancode(kbyte scancode)
  * Return if @scancode is included in the range of number or symbol
  */
 kbool
-kcheck_number_of_symbol_scancode(kbyte scancode)
+kcheck_number_or_symbol_scancode(kbyte scancode)
 {
 	/* if scancode is between 2 and 53, except for the case of alphabet,
 	 * it is a number of a symbol. */
@@ -314,4 +314,134 @@ kcheck_number_pad_scancode(kbyte scancode)
 	}
 
 	return FALSE;
+}
+
+/*
+ * Return if combined key value should be used.
+ */
+kbool
+kcheck_using_combined_code(kbyte scancode)
+{
+	kbyte down_scancode;
+	kbool use_combined_key = FALSE;
+
+	down_scancode = scancode & 0x7F;
+
+	if (kcheck_alphabet_scancode(scancode)) {
+		/* if scancode is alphabet, check shift and caps lock */
+		/* Do XOR to combine shift and caps lock */
+		if (kernel_keyboard_manager.shiftdown ^
+			kernel_keyboard_manager.caps_lock_on) {
+			use_combined_key = TRUE;
+		}
+	} else if (kcheck_number_or_symbol_scancode(scancode)) {
+		/* If scancode is number of symbol, check shift */
+		if (kernel_keyboard_manager.shiftdown) {
+			use_combined_key = TRUE;
+		}
+	} else if (kcheck_number_pad_scancode(scancode) &&
+			   kernel_keyboard_manager.extended_code_in == FALSE) {
+		/* If the input is from numpad, check num lock */
+		if (kernel_keyboard_manager.num_lock_on) {
+			use_combined_key = TRUE;
+		}
+	}
+
+	return use_combined_key;
+}
+
+void
+kupdate_combination_key_status_and_LED(kbyte scancode)
+{
+	kbool down = TRUE;	
+	kbyte down_scancode = scancode;
+	kbool LED_status_changed = FALSE;
+
+	/* processing up or down status, if the MSB is 1,
+	 * it means that key is up. Otherwise, it means key is down */
+	if (scancode & 0x80) {
+		/* key is up */
+		down = FALSE;
+		down_scancode &= 0x7F;
+	}
+
+	/* Searching for the combination key */
+	if ((down_scancode == 42) || (down_scancode == 54)) {
+
+		/* If scancode is that for shift (42 or 54), update shift key status */
+		kernel_keyboard_manager.shiftdown = down;
+	} else if (down) {
+		if (down_scancode == 58) {
+			/* scancode for caps lock */	
+			kernel_keyboard_manager.caps_lock_on ^= TRUE;
+			LED_status_changed = TRUE;
+		} else if (down_scancode == 69) {
+			/* scancode for num lock */	
+			kernel_keyboard_manager.num_lock_on ^= TRUE;
+			LED_status_changed = TRUE;
+		} else if (down_scancode == 70) {
+			/* scancode for scroll lock */	
+			kernel_keyboard_manager.scroll_lock_on ^= TRUE;
+			LED_status_changed = TRUE;
+		}
+	}
+
+	if (LED_status_changed) {
+		/* Toggle keyboard LED */
+		kchange_keyboard_LED(kernel_keyboard_manager.caps_lock_on,	
+							 kernel_keyboard_manager.num_lock_on,
+							 kernel_keyboard_manager.scroll_lock_on);
+	}
+}
+
+kbool
+kconvert_scancode_to_ASCII(kbyte scancode, kbyte *p_ascii, kbool *p_flags)
+{
+	kbool use_combined_key;
+
+	/* If pause is received, ignore left scancode of pause */
+	if (kernel_keyboard_manager.skip_count_for_pause > 0) {
+		kernel_keyboard_manager.skip_count_for_pause--;
+
+		return FALSE;
+	}
+
+	if (scancode == 0xE1) {
+		/* processing pause key */
+		*p_ascii = KEY_PAUSE;
+		*p_flags = KEY_FLAGS_DOWN;
+		kernel_keyboard_manager.skip_count_for_pause = KEY_SKIPCOUNTFORPAUSE;
+		return TRUE;
+	} else if (scancode == 0xE0) {
+		/* If extended key code is entered, actual key value will be entered.
+		 * So, only set flags. */
+		kernel_keyboard_manager.extended_code_in = TRUE;
+		return FALSE;
+	}
+
+	/* Check if a combined key should be returned */
+	use_combined_key = kcheck_using_combined_code(scancode);
+
+	/* Setting key value */
+	if (use_combined_key) {
+		*p_ascii = kernel_key_mapping_table[scancode & 0x7F].combined_code;
+	} else {
+		*p_ascii = kernel_key_mapping_table[scancode & 0x7F].normal_code;
+	}
+
+	/* Setting extended code in or out */
+	if (kernel_keyboard_manager.extended_code_in) {
+		*p_flags = KEY_FLAGS_EXTENDEDKEY;
+		kernel_keyboard_manager.extended_code_in = FALSE;
+	} else {
+		*p_flags = 0;
+	}
+
+	/* Set key down or up */
+	if (!(scancode & 0x80)) {
+		*p_flags |= KEY_FLAGS_DOWN;
+	}
+
+	kupdate_combination_key_status_and_LED(scancode);
+	return TRUE;
 }

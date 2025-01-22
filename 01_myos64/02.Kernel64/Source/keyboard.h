@@ -64,7 +64,7 @@ typedef struct key_mapping_entry_structure
 typedef struct keyboard_manager_structure
 {
 	/* Information about combination key */
-	kbool bshiftdown;
+	kbool shiftdown;
 	kbool caps_lock_on;
 	kbool num_lock_on;
 	kbool scroll_lock_on;
@@ -75,5 +75,20 @@ typedef struct keyboard_manager_structure
 } keyboard_manager_t;
 
 /* Function */
+kbool kcheck_output_buffer_is_full(void);
+kbool kcheck_input_buffer_is_full(void);
+kbool kactivate_keyboard(void);
+kbyte kget_keyboard_scancode(void);
+kbool kchange_keyboard_LED(kbool caps_lock_on, kbool num_lock_on,
+						   kbool scroll_lock_on);
+void kenable_A20gate(void);
+void kreboot(void);
+kbool kcheck_alphabet_scancode(kbyte scancode);
+kbool kcheck_number_or_symbol_scancode(kbyte scancode);
+kbool kcheck_number_pad_scancode(kbyte scancode);
+kbool kcheck_using_combined_code(kbyte scancode);
+void kupdate_combination_key_status_and_LED(kbyte scancode);
+kbool kconvert_scancode_to_ASCII(kbyte scancode, kbyte *p_ascii,
+								 kbool *p_flags);
 
 #endif /* __KEYBOARD_H__ */
