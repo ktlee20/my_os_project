@@ -4,6 +4,10 @@
 #include "types64.h"
 
 kbyte kInPortByte(kword port);
-kbyte kOutPortByte(kword port, kbyte data);
+void kOutPortByte(kword port, kbyte data);
+void kLoadGDTR(kqword gdtr_address);
+void kLoadTR(kword tss_segment_offset);
+void kLoadIDTR(kqword idtr_address);
+
 
 #endif /* __ASSEMBLY_UTILITY_H__ */

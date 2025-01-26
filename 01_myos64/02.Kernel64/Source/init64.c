@@ -1,7 +1,8 @@
 #include "types64.h"
 #include "keyboard.h"
-
-void k64print_string(int x, int y, const char *pc_string);
+#include "descriptor.h"
+#include "assembly_utility.h"
+#include "utility.h"
 
 void
 kernel64_main(void)
@@ -12,13 +13,27 @@ kernel64_main(void)
 
 	k64print_string(27, 11, "PASS");
 	k64print_string(0, 12, "IA-32e C Language Kernel Start.....[PASS]");
-	k64print_string(0, 13, "Keyboard Activate..................[    ]");
+	k64print_string(0, 13, "Initialise GDT.....................[    ]");
+	kinitialise_gdt_and_tss();	
+	kLoadGDTR(GDTR_START_ADDRESS);
+	k64print_string(35, 13, "PASS");
+
+	k64print_string(0, 14, "Load TSS segment...................[    ]");
+	kLoadTR(GDT_TSS_SEGMENT);
+	k64print_string(35, 14, "PASS");
+
+	k64print_string(0, 15, "Initialise IDT.....................[    ]");
+	kinitialise_idt_tables();
+	kLoadIDTR(IDTR_START_ADDRESS);
+	k64print_string(35, 15, "PASS");
+
+	k64print_string(0, 16, "Keyboard Activate..................[    ]");
 
 	if (kactivate_keyboard() == TRUE) {
-		k64print_string(35, 13, "PASS");
+		k64print_string(35, 16, "PASS");
 		kchange_keyboard_LED(FALSE, FALSE, FALSE);
 	} else {
-		k64print_string(35, 13, "FAIL");
+		k64print_string(35, 16, "FAIL");
 		while (1);
 	}
 
@@ -34,21 +49,11 @@ kernel64_main(void)
 				if (flags & KEY_FLAGS_DOWN) {
 					k64print_string(i++, 14, ascii);
 				}
+
+				if (ascii[0] == '0') {
+					scancode /= 0;
+				}
 			}
 		}
-	}
-}
-
-// Print string
-void
-k64print_string(int x, int y, const char *pc_string)
-{
-	kvideo_buf_character *pst_screen = (kvideo_buf_character *) 0xB8000;
-	int i;
-
-	pst_screen += (y * 80) + x;
-	for (i = 0 ; pc_string[i] != 0 ; i++)
-	{
-		pst_screen[i].character = pc_string[ i ];
 	}
 }
