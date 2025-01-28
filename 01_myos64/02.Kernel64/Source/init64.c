@@ -3,6 +3,7 @@
 #include "descriptor.h"
 #include "assembly_utility.h"
 #include "utility.h"
+#include "pic.h"
 
 void
 kernel64_main(void)
@@ -37,6 +38,12 @@ kernel64_main(void)
 		while (1);
 	}
 
+	k64print_string(0, 17, "PIC And Interrupt Initialise.......[    ]");
+	kinitialise_pic();
+	kmask_pic_interrupt(0);
+	kEnableInterrupt();
+	k64print_string(35, 16, "PASS");
+
 	while (1) {
 		/* if output buffer is full, then we can read scancode */
 		if (kcheck_output_buffer_is_full()) {
@@ -47,7 +54,7 @@ kernel64_main(void)
 			 * function */
 			if (kconvert_scancode_to_ASCII(scancode, ascii, &flags)) {
 				if (flags & KEY_FLAGS_DOWN) {
-					k64print_string(i++, 14, ascii);
+					k64print_string(i++, 18, ascii);
 				}
 
 				if (ascii[0] == '0') {

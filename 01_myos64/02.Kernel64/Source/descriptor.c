@@ -1,4 +1,5 @@
 #include "descriptor.h"
+#include "isr.h"
 #include "utility.h"
 
 void kdummy_handler(void);
@@ -118,8 +119,89 @@ kinitialise_idt_tables(void)
 	p_idtr->base_address = (kqword)p_idt_entry;
 	p_idtr->limit = IDT_TABLE_SIZE - 1;
 
-	for (i = 0 ; i < IDT_MAX_ENTRY_COUNT ; i++) {
-		kset_idt_entry(&(p_idt_entry[i]), kdummy_handler, 0x08, IDT_FLAGS_IST1,
+    kset_idt_entry(&(p_idt_entry[0]), kISRDivideError, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[1]), kISRDebug, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[2]), kISRNMI, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[3]), kISRBreakPoint, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[4]), kISROverflow, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[5]), kISRBoundRangeExceeded, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[6]), kISRInvalidOpcode, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[7]), kISRDeviceNotAvailable, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[8]), kISRDoubleFault, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[9]), kISRCoprocessorSegmentOverrun, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[10]), kISRInvalidTSS, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[11]), kISRSegmentNotPresent, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[12]), kISRStackSegmentFault, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[13]), kISRGeneralProtection, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[14]), kISRPageFault, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[15]), kISR15, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[16]), kISRFPUError, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[17]), kISRAlignmentCheck, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[18]), kISRMachineCheck, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[19]), kISRSIMDError, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[20]), kISRETCException, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+
+	for (i = 21 ; i < 32 ; i++) {
+		kset_idt_entry(&(p_idt_entry[i]), kISRETCException, 0x08, IDT_FLAGS_IST1,
+					   IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
+	}
+
+    kset_idt_entry(&(p_idt_entry[32]), kISRTimer, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[33]), kISRKeyboard, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[34]), kISRSlavePIC, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[35]), kISRSerial2, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[36]), kISRSerial1, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[37]), kISRParallel2, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[38]), kISRFloppy, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[39]), kISRParallel1, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[40]), kISRRTC, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[41]), kISRReserved, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[42]), kISRNotUsed1, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[43]), kISRNotUsed2, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[44]), kISRMouse, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[45]), kISRCoprocessor, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[46]), kISRHDD1, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+    kset_idt_entry(&(p_idt_entry[47]), kISRHDD2, 0x08, IDT_FLAGS_IST1,
+        IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT );
+
+	for (i = 48 ; i < IDT_MAX_ENTRY_COUNT ; i++) {
+		kset_idt_entry(&(p_idt_entry[i]), kISRETCInterrupt, 0x08, IDT_FLAGS_IST1,
 					   IDT_FLAGS_KERNEL, IDT_TYPE_INTERRUPT);
 	}
 }

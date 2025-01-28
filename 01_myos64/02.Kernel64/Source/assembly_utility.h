@@ -8,6 +8,8 @@ void kOutPortByte(kword port, kbyte data);
 void kLoadGDTR(kqword gdtr_address);
 void kLoadTR(kword tss_segment_offset);
 void kLoadIDTR(kqword idtr_address);
-
+void kEnableInterrupt(void);
+void kDisableInterrupt(void);
+void kReadRFLAGS(void);
 
 #endif /* __ASSEMBLY_UTILITY_H__ */

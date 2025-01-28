@@ -2,6 +2,7 @@
 
 ; Export function name
 global kInPortByte, kOutPortByte, kLoadGDTR, kLoadTR, kLoadIDTR
+global kEnableInterrupt, kDisableInterrupt, kReadFLAGS
 
 SECTION .text
 ; Read a byte from a port
@@ -46,4 +47,20 @@ kLoadTR:
 ; parameters: the address of idt table information
 kLoadIDTR:
 	lidt [rdi] ; Load parameter1(the address of IDTR) to processor
+	ret
+
+; Enable interrupt
+kEnableInterrupt:
+	sti
+	ret
+
+; Disable interrupt
+kDisableInterrupt:
+	cli
+	ret
+
+; Return the value of RFLAGS
+kReadRFLAGS:
+	pushfq		; Save RFLAGS register to stack
+	pop rax		; Pop the value to rax for return
 	ret
